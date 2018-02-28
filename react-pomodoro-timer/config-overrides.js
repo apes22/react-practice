@@ -13,7 +13,6 @@ function rewireJquery(config, env) {
 module.exports = function override(config, env) {
   //do stuff with the webpack config...
   // config = rewirePreact(config, env);c
-  console.log(env);
   if (env === "development") {
     config = rewireJquery(config, env);
   }
