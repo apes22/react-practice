@@ -6,6 +6,8 @@ import {Button, Modal} from 'react-bootstrap';
 import ReactBootstrapSlider from 'react-bootstrap-slider';
 import classNames from 'classnames';
 import './bootstrap-slider.min.css';
+import './bootstrap-slider-override.css';
+
 
 const options = {
   color: '#FC6E6E',
@@ -53,9 +55,10 @@ class Timer extends Component {
     this.onSaveSettings = this.onSaveSettings.bind(this);
     this.onCancelChanges = this.onCancelChanges.bind(this);
     this.closeModal = this.closeModal.bind(this);
-    this.changeSessionSettingsLen =this.changeSessionSettingsLen.bind(this);
+    this.changeSessionSetting =this.changeSessionSetting.bind(this);
+    this.changeBreakSetting = this.changeBreakSetting.bind(this);
   }
-
+changeSessionSetting
   componentWillUnmount() {
     clearInterval(this.timerID);
   }
@@ -69,9 +72,28 @@ class Timer extends Component {
     });
   }
 
-  changeSessionSettingsLen(event){
+  changeSessionSetting(event){
     var value = event.target.value || event.target;
     this.setState({sessionSettingLen:  value});
+  }
+
+  changeBreakSetting(event){
+    var value = event.target.value || event.target;
+    this.setState({breakSettingLen:  value});
+  }
+
+  onSaveSettings(){
+    this.stopTimer();
+    const {sessionSettingLen, breakSettingLen, name} = this.state;
+    const currNameLen = (name === "Session") ? sessionSettingLen : breakSettingLen
+    this.setState({
+      sessionLen: currNameLen,
+      secondsSet: parseInt(sessionSettingLen, 10) * 60,
+      secondsLeft: parseInt(sessionSettingLen, 10) * 60,
+      breakLen: breakSettingLen,
+      timeElapsed: 0,
+    })
+    this.closeModal();
   }
 
   onCancelChanges(){
@@ -81,18 +103,6 @@ class Timer extends Component {
       sessionSettingLen: sessionLen,
       breakSettingLen: breakLen
     });
-  }
-
-  onSaveSettings(){
-    this.stopTimer();
-    const {sessionSettingLen} = this.state;
-    this.setState({
-      sessionLen: sessionSettingLen,
-      secondsSet: parseInt(sessionSettingLen, 10) * 60,
-      secondsLeft: parseInt(sessionSettingLen, 10) * 60,
-      timeElapsed: 0,
-    })
-    this.closeModal();
   }
 
   startTimer({name}){
@@ -207,14 +217,36 @@ class Timer extends Component {
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-          SessionLength:
+
+          <div className="row">
+	      		<h5>Session Length</h5>
+	      	</div>
+	      	<div className="row">
           <ReactBootstrapSlider
             value={this.state.sessionSettingLen}
-            slideStop={this.changeSessionSettingsLen}
+            slideStop={this.changeSessionSetting}
             min={1}
             max={60}
             >
            </ ReactBootstrapSlider>
+           <span >{this.state.sessionSettingLen}</span> minute(s) 
+	      	</div>
+
+           <div className="row">
+	      		<h5>Break Length</h5>
+	      	</div>
+	      	<div className="row">
+          <ReactBootstrapSlider
+            value={this.state.breakSettingLen}
+            slideStop={this.changeBreakSetting}
+            min={1}
+            max={20}
+            >
+           </ ReactBootstrapSlider>
+           <span >{this.state.breakSettingLen}</span> minute(s) 
+	      	</div>
+
+        
 
            
 
