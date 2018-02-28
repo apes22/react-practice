@@ -5,6 +5,7 @@ import Navigation from './navigation';
 import {Button, Modal} from 'react-bootstrap';
 import ReactBootstrapSlider from 'react-bootstrap-slider';
 import classNames from 'classnames';
+import './bootstrap-slider.min.css';
 
 const options = {
   color: '#FC6E6E',
@@ -13,8 +14,8 @@ const options = {
   trailWidth: 4,
 }
 
-const SESSION_TIME = parseInt(1) * 60;
-const BREAK_TIME = parseInt(1) * 60;
+const SESSION_TIME = 10;
+const BREAK_TIME = 10;
 const MAX_SESSIONS = 8;
 
 const secondsToMs = (sec) => {
@@ -29,11 +30,13 @@ class Timer extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      seconds: SESSION_TIME,
-      secondsLeft: SESSION_TIME,
-      sessionLen: SESSION_TIME,
-      breakLen: MAX_SESSIONS,
-	    timeElapsed: 0,
+      secondsSet: parseInt(SESSION_TIME, 10) * 60, //seconds
+      secondsLeft: parseInt(SESSION_TIME, 10) * 60, //seconds
+      sessionLen: SESSION_TIME, //minutes
+      breakLen: BREAK_TIME, //minutes
+      sessionSettingLen: SESSION_TIME, //minutes
+      breakSettingLen: BREAK_TIME, //minutes
+	    timeElapsed: 0, //decimal representing the percentage
 	    name: "Let's Focus!",
 	    isRunning: false,
       sessionsCompleted: 0,
@@ -47,8 +50,10 @@ class Timer extends Component {
     this.countDown = this.countDown.bind(this);
 
     this.openModal = this.openModal.bind(this);
-    this.saveSettings = this.saveSettings.bind(this);
+    this.onSaveSettings = this.onSaveSettings.bind(this);
+    this.onCancelChanges = this.onCancelChanges.bind(this);
     this.closeModal = this.closeModal.bind(this);
+    this.changeSessionSettingsLen =this.changeSessionSettingsLen.bind(this);
   }
 
   componentWillUnmount() {
@@ -60,11 +65,34 @@ class Timer extends Component {
   }
 
   closeModal() {
-    this.setState({modalIsOpen: false});
+    this.setState({modalIsOpen: false
+    });
   }
 
-  saveSettings(){
+  changeSessionSettingsLen(event){
+    var value = event.target.value || event.target;
+    this.setState({sessionSettingLen:  value});
+  }
+
+  onCancelChanges(){
+    const {sessionLen, breakLen } = this.state
+    this.closeModal();
+    this.setState({
+      sessionSettingLen: sessionLen,
+      breakSettingLen: breakLen
+    });
+  }
+
+  onSaveSettings(){
     this.stopTimer();
+    const {sessionSettingLen} = this.state;
+    this.setState({
+      sessionLen: sessionSettingLen,
+      secondsSet: parseInt(sessionSettingLen, 10) * 60,
+      secondsLeft: parseInt(sessionSettingLen, 10) * 60,
+      timeElapsed: 0,
+    })
+    this.closeModal();
   }
 
   startTimer({name}){
@@ -85,23 +113,23 @@ class Timer extends Component {
      this.stopTimer();
      this.setState({
       name: "Session",
-      seconds: SESSION_TIME,
-      secondsLeft: SESSION_TIME,
+      secondsSet: parseInt(SESSION_TIME, 10) * 60,
+      secondsLeft: parseInt(SESSION_TIME, 10) * 60,
+      sessionLen: SESSION_TIME,
+      breakLen: BREAK_TIME,
       timeElapsed: 0,
       sessionsCompleted: 0,
      });
-    //view.updateSettings(SESSION_TIME, BREAK_TIME);
   }
 
   countDown() {
-    let {secondsLeft, seconds} = this.state;
+    let {secondsLeft, secondsSet} = this.state;
     if (secondsLeft > 0){
         secondsLeft -= 1;
-        const timeElapsed_dec = (seconds - secondsLeft)/seconds;
-        console.log(timeElapsed_dec);
+        const timeElapsed = (secondsSet - secondsLeft)/secondsSet;
         this.setState({
         secondsLeft: secondsLeft,
-        timeElapsed: timeElapsed_dec,
+        timeElapsed: timeElapsed,
       });   
     }else{
       this.switchTimers();
@@ -121,26 +149,22 @@ class Timer extends Component {
   }
 
   switchTimers(){
-    const {name, sessionsCompleted} = this.state;
+    const {name, sessionsCompleted, breakLen, sessionLen} = this.state;
     if (name === "Session"){
-      //var sessionLength = document.getElementById("sessionLength").textContent;
-      //model.activeTimer.resetTime(sessionLength);
       this.setState({
         name: "Break",
-        seconds: BREAK_TIME,
+        secondsSet: parseInt(breakLen, 10) * 60,
 	      secondsLeft: BREAK_TIME,
         timeElapsed: 0,
         sessionsCompleted: sessionsCompleted + 1,
       }); 
       this.stopTimer();
-    }else if (name === "Break"){
-      //var breakLength = document.getElementById("breakLength").textContent;
-     // model.activeTimer.resetTime(breakLength);
+    }else if (name === "Break"){    
       this.stopTimer();
       this.setState({
         name: "Session",
-        seconds: SESSION_TIME,
-	      secondsLeft: SESSION_TIME,
+        secondsSet: parseInt(sessionLen, 10) * 60,
+	      secondsLeft: sessionLen,
 	      timeElapsed: 0,
       });
     }
@@ -173,7 +197,7 @@ class Timer extends Component {
       <div className="modal-container">
         <Modal
           show={this.state.modalIsOpen}
-          onHide={this.closeModal}
+          onHide={this.onCancelChanges}
           container={this}
           aria-labelledby="contained-modal-title"
         >
@@ -183,22 +207,21 @@ class Timer extends Component {
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            
+          SessionLength:
           <ReactBootstrapSlider
-      value={this.state.sessionLen}
-      change={this.changeValue}
-      slideStop={this.changeValue}
-    step={this.state.step}
-    max={this.state.max}
-    min={this.state.min}
-    orientation="vertical"
-    reversed={true}
-    disabled="disabled" />
+            value={this.state.sessionSettingLen}
+            slideStop={this.changeSessionSettingsLen}
+            min={1}
+            max={60}
+            >
+           </ ReactBootstrapSlider>
+
+           
 
           </Modal.Body>
           <Modal.Footer>
-            <Button  bsStyle="default" onClick={this.closeModal}>Cancel</Button>
-            <Button  bsStyle="primary">Save Changes</Button>
+            <Button  bsStyle="default" onClick={this.onCancelChanges}>Cancel</Button>
+            <Button  bsStyle="primary" onClick={this.onSaveSettings}>Save Changes</Button>
           </Modal.Footer>
         </Modal>
       </div>
