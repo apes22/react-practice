@@ -60,7 +60,7 @@ button::-moz-focus-inner {
 
 #toggleTimer{
 	position: relative;
-	z-index: 1;
+	/* z-index: 1; */
 }
 
 .fa-cogs, .fa-undo, .fa-play, .fa-pause{
@@ -92,6 +92,15 @@ button::-moz-focus-inner {
 	width: 40px;
 	margin-left: -15px;
 	display: block;
+}
+
+.space-around{
+	display: flex !important;
+    display: -webkit-flex;
+    -webkit-flex-wrap: wrap;
+    display: -webkit-inline-flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
 }
 
 .completed{
