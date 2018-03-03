@@ -1,15 +1,14 @@
 import React, {Component} from 'react';
 import ProgressBar from 'react-progress-bar.js';
+import SettingsModal from './settings_modal';
 import SessionCounter from './session_counter';
+
 import Navigation from './navigation';
-import {Button, Modal} from 'react-bootstrap';
-import ReactBootstrapSlider from 'react-bootstrap-slider';
 import classNames from 'classnames';
 import './bootstrap-slider.min.css';
 import './bootstrap-slider-override.css';
 
-
-const options = {
+const circleStyleOptions = {
   color: '#FC6E6E',
   strokeWidth: 4,
   trailColor: '#D2D3D7',
@@ -39,11 +38,13 @@ class Timer extends Component {
       sessionSettingLen: SESSION_TIME, //minutes
       breakSettingLen: BREAK_TIME, //minutes
 	    timeElapsed: 0, //decimal representing the percentage
-	    name: "Let's Focus!",
+	    name: "Session",
 	    isRunning: false,
       sessionsCompleted: 0,
       modalIsOpen: false,
     };
+    this.timerID = "";
+
     this.toggleTimer = this.toggleTimer.bind(this);
     this.onResetTimer = this.onResetTimer.bind(this);
     this.startTimer = this.startTimer.bind(this);
@@ -74,12 +75,15 @@ changeSessionSetting
 
   changeSessionSetting(event){
     var value = event.target.value || event.target;
+    console.log(value);
     this.setState({sessionSettingLen:  value});
   }
 
   changeBreakSetting(event){
+    
     var value = event.target.value || event.target;
-    this.setState({breakSettingLen:  value});
+    console.log(value);
+    this.setState({breakSettingLen: value});
   }
 
   onSaveSettings(){
@@ -87,10 +91,11 @@ changeSessionSetting
     const {sessionSettingLen, breakSettingLen, name} = this.state;
     const currNameLen = (name === "Session") ? sessionSettingLen : breakSettingLen
     this.setState({
-      sessionLen: currNameLen,
+      sessionSet: currNameLen,
       secondsSet: parseInt(sessionSettingLen, 10) * 60,
       secondsLeft: parseInt(sessionSettingLen, 10) * 60,
       breakLen: breakSettingLen,
+      sessionLen: sessionSettingLen,
       timeElapsed: 0,
     })
     this.closeModal();
@@ -101,7 +106,7 @@ changeSessionSetting
     this.closeModal();
     this.setState({
       sessionSettingLen: sessionLen,
-      breakSettingLen: breakLen
+      breakSettingLen: breakLen,
     });
   }
 
@@ -127,6 +132,8 @@ changeSessionSetting
       secondsLeft: parseInt(SESSION_TIME, 10) * 60,
       sessionLen: SESSION_TIME,
       breakLen: BREAK_TIME,
+      sessionSettingLen: SESSION_TIME, //minutes
+      breakSettingLen: BREAK_TIME, //minutes
       timeElapsed: 0,
       sessionsCompleted: 0,
      });
@@ -164,7 +171,7 @@ changeSessionSetting
       this.setState({
         name: "Break",
         secondsSet: parseInt(breakLen, 10) * 60,
-	      secondsLeft: BREAK_TIME,
+	      secondsLeft: parseInt(breakLen, 10) * 60,
         timeElapsed: 0,
         sessionsCompleted: sessionsCompleted + 1,
       }); 
@@ -174,7 +181,7 @@ changeSessionSetting
       this.setState({
         name: "Session",
         secondsSet: parseInt(sessionLen, 10) * 60,
-	      secondsLeft: sessionLen,
+	      secondsLeft: parseInt(sessionLen, 10) * 60,
 	      timeElapsed: 0,
       });
     }
@@ -193,92 +200,52 @@ changeSessionSetting
       sessionsCompleted,
       timeElapsed,
       isRunning,
+      modalIsOpen,
       } = this.state;
     
-      const toggleClasses = classNames(
-        'fa', 'fa-3x', 
-        {'fa-pause': isRunning}, 
-        {'fa-play': !isRunning}
-        );
+    const toggleClasses = classNames( 'fa', 'fa-3x', {'fa-pause': isRunning}, {'fa-play': !isRunning});
   
     return(
       <div>
       <Navigation onReset={this.onResetTimer} onOpenModal={this.openModal} />
-      <div className="modal-container">
-        <Modal
-          show={this.state.modalIsOpen}
-          onHide={this.onCancelChanges}
-          container={this}
-          aria-labelledby="contained-modal-title"
-        >
-          <Modal.Header closeButton>
-            <Modal.Title id="contained-modal-title">
-              Settings
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-
-          <div className="row">
-	      		<h5>Session Length</h5>
-	      	</div>
-	      	<div className="row">
-          <ReactBootstrapSlider
-            value={this.state.sessionSettingLen}
-            slideStop={this.changeSessionSetting}
-            min={1}
-            max={60}
-            >
-           </ ReactBootstrapSlider>
-           <span >{this.state.sessionSettingLen}</span> minute(s) 
-	      	</div>
-
-           <div className="row">
-	      		<h5>Break Length</h5>
-	      	</div>
-	      	<div className="row">
-          <ReactBootstrapSlider
-            value={this.state.breakSettingLen}
-            slideStop={this.changeBreakSetting}
-            min={1}
-            max={20}
-            >
-           </ ReactBootstrapSlider>
-           <span >{this.state.breakSettingLen}</span> minute(s) 
-	      	</div>
-
+      <SettingsModal 
+        modalIsOpen={modalIsOpen}
+        onHide={this.onCancelChanges}
         
-
-           
-
-          </Modal.Body>
-          <Modal.Footer>
-            <Button  bsStyle="default" onClick={this.onCancelChanges}>Cancel</Button>
-            <Button  bsStyle="primary" onClick={this.onSaveSettings}>Save Changes</Button>
-          </Modal.Footer>
-        </Modal>
-      </div>
+        sessValue={this.state.sessionSettingLen}
+        sessSlideStop={this.changeSessionSetting}
+        sessMin={1}
+        sessMax={60}
+       
+        breakValue={this.state.breakSettingLen}
+        breakSlideStop={this.changeBreakSetting}
+        breakMin={1}
+        breakMax={30}
+       
+        onCancelChanges={this.onCancelChanges}
+        onSaveSettings={this.onSaveSettings}
+      />
        
       <div id="content">
-      <h1 id="timerName">{name}</h1>
-      <Circle className="progressBarContainer"
-        progress={timeElapsed}
-        options={options}
-        initialAnimate={false}
-        
-      />
-      <div className="row">
-        <h2 id="timer">{secondsToMs(secondsLeft)}</h2>
-      <button 
-        id="toggleTimer" onClick={this.toggleTimer}
-      >
-        <i id="toggleIcon" className={toggleClasses} aria-hidden="true"></i>
-      </button>
-    </div>
-    <SessionCounter 
-    sessionsAvailable={MAX_SESSIONS}
-    sessionsCompleted={sessionsCompleted}
-    SessionCounter/> 
-  </div>
+        <h1 id="timerName">{this.state.name}</h1>
+        <Circle className="progressBarContainer"
+          progress={timeElapsed}
+          options={circleStyleOptions}
+          initialAnimate={false}
+        />
+        <div className="row">
+          <h2 id="timer">{secondsToMs(secondsLeft)}</h2>
+        <button 
+          id="toggleTimer" onClick={this.toggleTimer}
+        >
+          <i id="toggleIcon" className={toggleClasses} aria-hidden="true"></i>
+        </button>
+        </div>
+        <SessionCounter 
+          sessionsAvailable={MAX_SESSIONS}
+          sessionsCompleted={sessionsCompleted}
+          SessionCounter/> 
+      </div>
   </div>
     )
   } 
